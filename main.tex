@@ -1,0 +1,474 @@
+\documentclass[11pt]{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{hyperref} % Required for hyperlinks
+
+% Beautiful theorems, definitions etc.
+\usepackage[most]{tcolorbox}
+\usepackage{amsmath, amsthm}
+
+% This command forces dotted lines for sections in the article class
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+
+\title{Introduction to Algorithms}
+\author{Xavier Henry}
+\date{September 2026}
+
+% --- 1. Page Setup & Geometry ---
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry} % Fixes the massive default LaTeX margins
+
+% --- 2. Math & Science Essentials ---
+\usepackage{amsmath, amssymb, amsthm} % Essential for formulas, symbols, and proofs
+\usepackage{bm} % For bold math symbols
+\usepackage{enumitem} % for lists
+
+\usepackage[normalem]{ulem} % for strikethrough!
+
+% --- 3. Beautiful Callout Boxes (Perfect for Notes!) ---
+% 3.1. Define a standard theorem counter that resets with the section
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{defnt}{Definition}[section]
+\newtheorem{exmpl}{Example}[section]
+\newtheorem{corol}{Corollary}[section]
+
+% 3.2. Create the color boxes and link them to those counters using "use counter"
+\newtcolorbox[use counter=defnt]{definitionbox}[1]{
+    colback=blue!5!white, 
+    colframe=blue!75!black, 
+    fonttitle=\bfseries, 
+    title=Definition \thedefnt: #1, % Automatically prints "Definition X.Y: Your Title"
+    arc=4mm
+}
+
+\newtcolorbox[use counter=thm]{theorembox}[1]{
+    colback=purple!5!white,    % 5% purple background (soft pastel)
+    colframe=purple!75!black,  % Deep purple border and title bar 
+    fonttitle=\bfseries, 
+    % This line checks if you gave a title. If not, it skips the colon
+    title={Theorem \thethm\ifstrempty{#1}{}{ : #1}},
+    arc=4mm
+}
+
+\newtcolorbox[use counter=exmpl]{examplebox}[1]{
+    colback=green!3!white,    % 5% purple background (soft pastel)
+    colframe=green!80!black,  % Deep purple border and title bar 
+    fonttitle=\bfseries, 
+    % This line checks if you gave a title. If not, it skips the colon
+    title={Example \theexmpl\ifstrempty{#1}{}{ : #1}},
+    arc=4mm
+}
+
+\newtcolorbox[use counter=corol]{corollarybox}[1]{
+    colback=yellow!5!white,    % 5% purple background (soft pastel)
+    colframe=yellow!75!black,  % Deep purple border and title bar 
+    fonttitle=\bfseries, 
+    % This line checks if you gave a title. If not, it skips the colon
+    title={Corollary \thecorol\ifstrempty{#1}{}{ : #1}},
+    arc=4mm
+}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents \newpage
+
+\section{Lecture 1}
+\begin{definitionbox}{Algorithm}
+    An algorithm is a step by step procedure for solving a computational, problem. A computational problem takes inputs, and for each input, outputs one or more resulting outputs.
+\end{definitionbox}
+
+\subsection{Integer Addition}
+
+Consider the preschool addition algorithm $x + y$ where we add 1 to $x$, $y$ times. The running time of this is $\Theta(10^n)$. Prove this! \\
+Our grade school algorithm, wherein we line up the digits and add (assuming we've memorized the single-digit addition table), takes linear time, $\Theta(n)$
+
+\begin{theorembox}{Integer Addition Lower Bound}
+    Every correct algorithm for integer addition requires $\Omega(n)$ time.
+\end{theorembox}
+
+\begin{proof}
+    Our output must have at least $n$ digits.
+\end{proof}
+
+Alternatively, consider the following (more subtle) proof
+\begin{proof}
+    For our algorithm to be correct, we must read every input digit, of which there are $\Omega(n)$.
+    Suppose we have a magical correct addition algorithm $f$ that does not read every input digit. Without loss of generality, suppose the digit that is not touched is $x_0$. There exists  $x,y$ and $x',y'$ which differ on only $x_0$ st. $x+y \neq x'+y'$ but $f(x,y) = f(x',y')$.
+\end{proof}
+
+\subsection{Integer Multiplication}
+We now consider the preschool integer multiplication, where we add $x$ to itself $y$ times. This is exponential time. \\ % WHY???
+Consider also the grade school multiplication algorithm. This is the standard algirithm of lining up the digits and multiplying them with our multiplication tables. We know that each digit in $x$ must touch each digit in $y$, so this must be $\Theta(n)$. \\
+Importantly, is there a better algorithm that is correct, yet faster? \\
+We know the size of our output is linear $O(n)$ and the size of our input is $O(n)$.
+
+\subsubsection{Divide and Conquer}
+A divide and conquer algorithm divides our problem into subproblems, recursively solves each subproblem, and assebles into a solution.
+We can use such an algorithm for integer multiplication (figure this out)!
+
+\begin{align*}
+    A &= mult(x_l, y_l) \\
+    B &= mult(x_h, y_l) \\
+    C &= mult(x_l, y_h) \\
+    D &= mult(x_h, y_h) \\
+    T(n) &= \text{worst-case time on n-digit inputs} \\
+    T(n) &\leq 4T(n/2)+Cn \\
+    T(n) &\leq O(n^2) % go back and solve this
+\end{align*}
+
+\subsubsection{Karatsuba's Algorithm}
+Instead, let's do:
+\begin{align*}
+    A &= mult(x_l, y_l) \\
+    D &= mult(x_h, y_h) \\
+    E &= mult(x_l + x_h, y_l + y_h) \\
+\end{align*}
+
+And our output: $A + 10^{n/2}(E-A-D) + 10^nD$. This becomes clear if we FOIL.
+
+Now we prove our running time.
+\begin{proof}
+    \begin{align*}
+    T(n) &\leq 3T(n/2 + 1) + Cn \\
+    T(n) &\leq n^{\log_2{3}} \\
+         &= O(n^{1.6})
+    \end{align*}
+\end{proof}
+With some analysis of the algorithm, we can prove that it is tight. \\
+It's important to note, that though Karatsuba is better asymptotically, for smaller input values, the speed vs. grade school multiplication depends heavily on our implementation of the algorithm.
+
+\section{Lecture 2: Recursion}
+
+\subsection{Sorting}
+Input: Array $A$ \\
+Output: Permutation $\sigma$ such that $A \circ \sigma$ is monotone.
+
+\subsubsection{Selection Sort}
+We will analyze a recursive implementation of selection sort.
+\begin{proof}
+    This is just the implementation.
+    Base case: If $|A| \leq 1$ return $A$ \\
+    Otherwise: Let $m :=$ Arg ,min $A$. Swap $A[0],A[m]$ \\
+    Call selection sort on $A[1:]$
+\end{proof}
+You can see this is very similar to induction. We now write a proof of correctness
+\paragraph{Proof of Correctness}
+Correctness: Inductive Preidcate $P(n)$, Alg correct on size $n$ input.
+\begin{proof}
+    Base Case: If $|A| \leq 1$ already sorted, so return $A$ (correct result). \\
+    Inductive Step: Suppose $|A| > 1$ and $P(n-1)$. We want to prove that we end up with a permutation of $A$ we call $A'$ (1) and that this permutation is monotone (2). To prove (1), we ensure that at each step, we are applying a permutation. Finding the min of $A$ has no write, performing a swap is a transposition and $SS(A[1:])$ permutes by our inductive hypothesis, since we assume $P$ for smalller values. Therefore, $A'$ is a permutation of $A$. (proved 1) \\
+    We swap the min of $A$ to $A'[0]$. By our inductive hypothesis, $A'[1:]$ is monotone. $A'[1]$ is in $A$ so is no smaller than min $A$. \\
+    $A'[0] \leq A'[1] \leq ...$ so $A'$ is monotone (proved 2) \\
+    By induction, our implementation of selection sort is correct.
+\end{proof}
+\paragraph{Efficiency and Proving Bounds}
+Quantify input
+\begin{definitionbox}{Worst-Case Runtime}
+    The worst-case runtime $T(n)$ of $A$ is our maximum over all $x$ of size $n$ of number of opperations used by $A(x)$. $A$ has worst case runtime $O(f)$ means for sufficiently large $x$, $A(x)$ uses $\leq$ constant factor for more than $f(|x|)$ operations. Finding this worst-case runtime gives us a lower bound.\\
+    If we want to prove an upper bound on our worst-case runtime, we want to prove that $A(x)$ always takes $O(f(|x|))$ time. As said before, to prove a lower bound we need \textbf{one} input of each length for which $A(x)$ is slow. If we choose a particularly fast input for $A$ to lower bound our algorithm, this is wrong.
+\end{definitionbox}
+\begin{definitionbox}{Model of Computation and Atomic Operations}
+    A model of computation is an abstraction of a computer. We use what is called the word-RAM model, which closely mimicks the operations of an actual computer. We use $w$ bit words as a unit of memory. Our atomic operations are $+,-,*,/, etc.$, AND, OR, NOT, comparisions, $...$. Any bianry operation is atomic. We can read and write from/to specific memory addresses. We also have control flow, so things like IF, WHILE, RETUR. We can do all these atomic operations in constant time.
+\end{definitionbox}
+To analyze the runtime of selection sort, we need a recurrence relation.
+\begin{align*}
+    T(n) \in \Theta(1) \text{if} n \leq 1 \\
+    T(n) &\leq \Theta(n) + \Theta(1) + T(n-1) \\ 
+    T(n) &\leq O(n^2)
+\end{align*}
+We ignore the largest half of elements $n/2$ times. \\
+Lower bound: $n/2$ elements read $n/2$ times each $\Omega(n^2)$. Say we have a monotonically decreasing list that we want to make monotonically increasing. By the time selection sort reaches $\lfloor n/2 \rfloor$, we have sorted the first half of the list, and swapping has sorted the second half of the list. This proves our $n^2$ lower bound, since we've done at least $n/2$ work for $n/2$ elements.
+\subsubsection{Peak Finding}
+\begin{definitionbox}{Peak}
+    A peak of array $A$ is an index $i$ such that $A[i]$ is at least as large as its neighbours (local maximum)
+\end{definitionbox}
+
+\paragraph{Peak-finding Problem}
+Input: Array $A$ (non-empty) \\
+Output: Peak of $A$ (any) \\
+Edge cases of input should be considered carefully in the problem definition!
+
+\paragraph{Algorithm 1: Exhaustive Search} As counter intuitive as this may seem, this is a perfectlty valid algorithm definition. \\
+We first prove correctness.
+\begin{proof}
+    Correctness by exhaustion.
+\end{proof}
+Runtime:
+\begin{proof}
+    Upper: By definition we do $\Theta(1)$ check at most $O(n)$. \\
+    Lower: Suppose $A$ strictly monotone. Our check fails $\Omega(n)$ times. (notice here we picked a super slow input and used that as our lower bound!)
+\end{proof}
+\paragraph{Algorithm 2: Binary Search}
+Recursion: discard half (constant fraction) of input quickly. \\
+Idea: check the midpoint (if peak, then return midpoint), go uphill
+\begin{proof}
+    Here's our implementation: \\
+    PF(A): If length 1 outpit 0 \\
+    Otherwise, Let $j= \lfloor n/2 \rfloor$. If peak output $j$. If $A[j-1] \geq A[j]$ recurse on $A[:j]$. Otherwise, recurse on $A[j+1:]$.
+\end{proof}
+Correctness
+\begin{proof}
+    Base case: if singleton index $0$ is peak vacuously. \\
+    Inductive case: Suppose $n > 1$, $PF$ is correct on inputs smaller than $n$. \\
+    Case 1: $j$ is peak. Correctly return $j$. \\
+    Case 2: Assume without loss of generality $A[j-1] \geq A[j]$. \\
+    WTP: returned peak of $A[:j]$ is also a peak in $A$. \\
+    Case 1: $k < j-1$ then neighbours are same, so still peak. \\
+    Case 2: Case 1 + guard???
+\end{proof}
+TODO: runtime analysis.
+
+\section{Lecture 3: Divide and Conquer, Iteration}
+\begin{itemize}
+    \item divide
+    \item conquer - solve all of the subproblems recursively
+    \item recombine - recombine all the solutions to subproblems together to get our final solution
+\end{itemize}
+\subsection{Merge Sort}
+Divide input into two halves. Recursively sort both halves then marge sorted subarrays into a sorted array. Let's make a problem statement
+\begin{proof}
+    MERGE \\
+    INPUT: two arrays $A,B$ \\
+    PRECONDITION: $A+B$ sorted \\
+    OUTPUT: an array $C$ which is the sorted concatenation of $A$ and $B$ \\
+    Initialize two indices $i,j$. Initialize empty $C$ of size $2n$. \\
+    While $i+j < 2n$: \\
+    \{ \\
+        if $A[i] \leq B[j]$ then $C[i+j] := A[i]$, increment $i$ \\
+        otherwise, $C[i+j]:=B[j]$, increment $j$ \\
+    \} \\
+    Output $C$
+\end{proof}
+\subsubsection{Proof of Correctness}
+We could try to use induction, but this would cause us something called buildup error. That is, with induction it's not clear whether we are actually building toward an answer. Here, it's best to use our \textbf{invariants}! But how do we do this?
+\begin{itemize}
+    \item Model loop as state machine
+    \item Think of a \textbf{state} as a snapshot of memory
+    \item Start state: initialization
+    \item transitions: executions of loop body
+    \item final states: loop \textbf{guard} (What is a loop guard??? -> it's just the while loop condition lol)
+\end{itemize}
+When doing a proof with invariants, we do not necessarily want to prove correctness directly. Instead, we want to prove partial correctness. That is, if the algorithm terminates, it produces the correct answer. So what do we need for our invariant proof?
+\begin{itemize}
+    \item Inductive predicate: Choose correct invariant(s)
+    \item Initialization: Prove that the invariant(s) are true at initialization (our start state)
+    \item Preservation: we need to prove that our invariants are preserved properties throughout the operation of our state machine.
+    \item Prove invariants $\implies$ partial correctness
+    \item Runtime analysis (proves termination)
+\end{itemize}
+We first prove partial correctness of our \textbf{merge} algorithm (putting the two lists together).
+\begin{proof}
+    \textbf{Partial Correctness of Merge} $A,B$ read only \\
+    I5: $C[:i+j]$ is the concatenation of $A[:i]+B[:j]$ \\
+    I6: $C[:i+j]$ is sorted \\
+    I3: $A[i] \geq C[:i+j]$ \\
+    I4: $B[j] \geq C[:i+j]$ \\
+    I1: $0 \leq i \leq n$ \\
+    I2: $0 \leq j \leq n$ \\
+    \textbf{Initialization}: All vacuous since $i=j=0$ \\
+    \textbf{Preservation}: WLOG $A[i] \leq B[j]$ \\
+    I3: WTP $A[i+1] \geq C[:i+j+1]$ \\
+    By precondition, $A[i+1 \geq A[i] \geq C[i+j] $ \\
+    I4: Because $B[j] \geq A[i]$, as above \\
+    I5: Adding $A[i]$ to both prefix of $A$ and of $C$ \\
+    I6: follows from I3,I6 \\
+    \textbf{Partial Correctness}: Follows from I5, I6, and the loop guard. When our loop guard fails, $C$ will be sorted and will be a permutation of all of $A$ and all of $B$. 
+\end{proof}
+
+In order to prove our merge sort algorithm (recurisve), we need to use strong induction. Prove this later
+\begin{proof}
+    Strong induction.
+\end{proof}
+
+Let's do runtime analysis now!
+\begin{proof}
+    $i+j$ starts at $0$, increments with every loop body $\leq 2n$ by loop guard, so $2n$ iterations $\Theta(1)$ per $\Theta(n)$ total.
+    \begin{align*}
+        T(n) &\leq 2T(n/2)+O(n) \\
+        T(n) &\leq O(nlogn)
+    \end{align*}
+    and we have our upper bound. Now, for our lower bound. Take any valid input of length $n$. Every element is merged $\Omega(logn)$ times and our merge algorithm takes linear time so $\Omega(nlogn)$.
+\end{proof}
+
+\subsection{Inversion Counting}
+Inversion: pair $(i,j)$ such that $i < j$ and $A[j]<A[i]$. \\
+\textbf{Alg1:} Brute force, Runtime $\Theta(n^2)$, Correctness: exhaustive. \\
+But notice that inversion counting is roughly how sorted is $A$? In fact, it's an interesting problem to sort our array, then count the number of inversions. In this case, making our problem a bit harder makes our ideal algorithm much faster. \\
+Idea: Suppose $A=A[:m]+A[m:]$ either $i<j<m$ (or $m\leq i \leq j$ which we can count recursively) or $i<m\leq j$ \\
+While merging, if we take from right half, add $m-i$, $i$ being our iteration index.
+
+\subsection{2 Dimensional Peak Finding}
+TODO: This was taught in one of the (very old) 6.006 lectures! You should totally watch his coverage of this.
+Input: $n \times m$ array $A$. \\
+Output: any peak in $A$
+\paragraph{Exhaustive Search}: $\Theta(nm)$ time (Is this linear?)
+
+\subsubsection{Divide and Conquer}
+Look at mid col $j$. Find a peak in $j$, then go uphill. Let's find a peak that is the maximum in its column (this prevents an edge case with our boundary).
+
+\paragraph{Runtime}:
+\begin{align*}
+    T(m,n) &\leq T(m,n/2)+ \Theta(m) \\
+           &\leq O(mlogn) \\
+\end{align*}
+Take $N:=mn$ then it is $O(\sqrt{N}\log N)$
+
+\section{Lecture 4: Reduction and Randomization}
+
+\subsection{Review}
+Divide and conquer; three techniques:
+\begin{itemize}
+    \item Loop invariants: we start with an initial state, and as long as a loop guard held true,
+        we stay in the loop and change things (while maintaining our invariants, which we prove)
+        and give an output.
+    \item Make the problem harder, so that we move from a specific case of something to a more
+        general problem that is easier to analyze and/or solve
+    \item Recurrences - \textbf{Master's Theorem!} You should \sout{probably} DEFINITELY memorize 
+        this!
+\end{itemize}
+
+\subsection{Another Loop: Polish Flag}
+
+\paragraph{Problem} Given an array $A$ of $n$ balls, each of which is either red or white,
+rearrange them in-place so that all the red balls are to the left.
+
+\paragraph{Algorithm} Pretend that we have two elements, $A[-1]$ (this is the thing in the far left,
+not the last element like in Python) as a dummy white ball, and $A[n]$ as a dummy red ball. We fix
+two indices: $w=-1, r=n$. Notice we start right before the first elem and right after the last elem,
+respectively. Why do we need these dummies though? \\
+While $w \leq r$: swap $A[w] \iff A[r]$, increment $w$ until $A[w]$ is white, decrement $r$ until
+$A[r]$ is red.
+
+Invariants:
+\begin{itemize}
+    \item I1: $A[r]$ is red
+    \item I2: nothing to the right of $A[r]$ is red (we want whites to the right... this is such
+        a funny phrase it made me chuckle please don't cancel me I'm just trying to make my notes
+        fun so I get an A)
+    \item I3: $A[w]$ is white
+    \item I4: nothing to the left of $A[w]$ is white (we want reds to the left)
+\end{itemize}
+
+\paragraph{Correctness}
+\begin{proof}
+    The first idea of the correctness proof is showing that our entire operation permutes the array.
+    That is, our only whites are swaps $\implies$ permutation. Thus, we don't have to consider
+    resizing or any alterations to the array, only proving the reds are to the left and the whites
+    to the right (there it is again please laugh everyone!). \\
+    \textbf{Initialization}: On initialization, I1, I2, I3, I4 are all vacuous, since there is 
+    nothing to the right of $A[r]$ and nothing is to the left of $A[w]$. \\
+    \textbf{Preserved}: We perform a swap, so I1, I3 are temporarily broken, but we fix this before
+    the end of this iteration so I1 and I3 remain true. Our swap before incrementing, as well as our
+    loop guard $w \leq r$ ensure I2, I4 remain true. \\
+    \textbf{Correctness}: Once we terminate, we know our guard is false, that is $w > r$.
+    At that point, I1, I2, I3, I4 are all satisfied, so we've reached our goal. \\
+    $\mathbb{Q}$: At the end, how are $w$ and $r$ related? $\implies$ $w=r+1$. This implies that our
+    algorithm \textbf{always} terminates! Note that proving this algorithm terminates is quite
+    important and a very nontrivial step.
+\end{proof}
+
+\paragraph{Runtime}
+\begin{proof}
+    $w$ is incremented by $+1$ and $r$ is incremented by $-1$ for at most $n$ steps, so we have upper
+    bound $O(n)$. As for our lower bound: $r-w=n+1$ at the start, and at the end $w=r+1 \implies 
+    \Omega(n)$ lower bound runtime. Thus we have a tight bound of $\Theta(n)$.
+\end{proof}
+
+\subsection{Reductions}
+
+\begin{definitionbox}{Reduction}
+    A reduction from problem $P$ to problem $Q$ is an algorithm that solves $P$ using (any algorithm
+    for) $Q$. That is, we can use $Q$ to solve $P$. We express this as $P \leq Q$ "$P$ reduces to
+    $Q$. \\
+    A nice way to think about this is taking an input $x$, (implicitly) transforming its input to 
+    $Q$, then transforming the output to $P(x)$. \\
+    Note that neither problem need be solvable!
+\end{definitionbox}
+
+\begin{itemize}
+    \item Squaring $\leq$ multiply: $x^2 = x \times x$
+    \item And the other way around: multiply $\leq$ square: $(x+y)^2-(x-y)^2$
+    \item Median $\leq$ Sorting: sorted ($A$)$[\lfloor|A| / 2\rfloor]$
+\end{itemize}
+
+\subsubsection{Types of Reduction: Turing/Oracle and Many-one}
+
+\begin{definitionbox}{Turing Reduction}
+    We denote this as $\leq_T$. We can use $Q$ any number of times. Formally, a Turing Reduction from
+    a problem $P$ to problem $Q$ is an algorithm $A$ that solves $P$ while using a subroutine solving
+    $Q$ as an atomic operation.
+\end{definitionbox}
+
+\begin{definitionbox}{Many-one/Mapping Reduction}
+    We denote this as $\leq_m$. A many-one reduction from problem $P$ to problem $Q$ is an algorithm 
+    (or function) $f$ with the property that $P = Q \circ f$ or $P = Q(f(x))$ for input $x$. A many-
+    one reduction is a Turing reduction with the restriction that the subroutine for $Q$ can be used
+    only once, at the ennd, and the answer \textbf{must be returned without modification}. \\
+    In other words, take an input $x$ for $P$, transform it using $f$ into an input $y=f(x)$ for $Q$,
+    and then compute $Q(y)$, which should give the same answer as $P(x)$. A Many-One Reduction is
+    necessarily a Turing Reduction.
+\end{definitionbox}
+
+\begin{itemize}
+    \item Square $\leq$ mult: This is a turing reduction, since we use mult at least once. Since we
+        only use mult once in $f(x)=x \times x$ this is also a many-one reduction.
+    \item Mult $\leq$ square: We use square twice, so this is a turing reduction, but not a many-one
+        reduction.
+    \item Median $\leq$ Sort: It is a turing reduction, since we use it once, but it's not a many-one
+        reduction for an odd reason: \textbf{the output type is different}!
+\end{itemize}
+
+\subsubsection{Median Reduces to Selection (Many-One)}
+Assume for the input $A, |A|$ odd and all elements distinct. \\
+A first instinct would be to recurse, perhaps dividing the array into three and recursing on the
+middle partition, but that actually doesn't work, because the median of our subarray is not
+necessarily the median of our larger array. Instead, let's reduce this to Selection.
+\paragraph{Selection Algorithm}
+\begin{itemize}
+    \item input: array $A$ with distinct elems and an integer $k:0\leq k < |A|$.
+    \item output: $k$th smallest elem of $A$.
+\end{itemize}
+For our selection algorithm, let's try the following. We guess an element $P \in A$ and check if that
+is our $k$th smallest by colouring all smaller elements red and running Polish Flag. When Polish
+terminates, we have 3 cases:
+\begin{itemize}
+    \item $w=k$: We have found our median, return $P$.
+    \item $w>k$: Recurse on the left (red) side: SELECT($A[:w],k$). We know our $k$th smallest is
+        in the smaller half of our array, so we can discard the upper half.
+    \item $w<k$: SELECT($A[w+1:],k-w$). We know our $k$th smallest element is in the upper half of
+        our array, so we can discard the lower half and increment $k$ by $w$ to adjust for our new
+        subarray.
+\end{itemize}
+\paragraph{Now, how do we choose $P$?} A fixed (determinisitic) fast method for choosing $P$ implies
+lower bound $\Omega(n^2)$, since the fixed algorithm may have some worsr case input for which it is 
+ill-suited. Instead, let's choose \textbf{randomly}!
+
+\subsection{Randomisation}
+
+\subsubsection{Quick Select}
+\begin{itemize}
+    \item Base case: if $|A|$ small, just sort and return the index
+    \item Choose random $i \in (0,|A|)$; set $P=A[i]$
+    \item Colour the smaller elements red; run Polish Flag
+    \item If $w=k$: output $P$
+    \item If $w>k$: QUICKSELECT($A[:w], k$)
+    \item If $w<k$: QUICKSELECT($A[w+1:], w-k$)
+\end{itemize}
+
+\paragraph{Why can we only claim partial correctness?} Exercise: Modify the algorithm slightly to
+make it correct (What are we talking about here?)
+
+\begin{definitionbox}{Expected Runtime}
+    The expected runtime of a randomized algorithm is the maximum (over all inputs $x$ of length $n$)
+    of the expected (over the randomness of our algorithm) number of steps that our algorithm
+    executes for input $x$. Caution: We're looking at the worst-case input here, not a random input!
+    Ensure to \textbf{quantify} the input first and then \textbf{take the expectation of the
+    algorithm's runtime}. \\
+    Note that the expected runtime is not the same as the average case runtime.
+\end{definitionbox}
+
+to be continued tomorrow...
+
+\end{document}
