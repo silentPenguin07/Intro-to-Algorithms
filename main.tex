@@ -469,6 +469,712 @@ make it correct (What are we talking about here?)
     Note that the expected runtime is not the same as the average case runtime.
 \end{definitionbox}
 
-to be continued tomorrow...
+Let's prove the expected runtime of Quick select.
+
+\begin{proof}
+    Let pivot be the $i$th smallest element in $\{0,...,n-1\}$. Our expected runtime is the maximum
+    number of steps (over $k$) that our algorithm executes. Now, when we choose a $k$, we have two
+    cases: either our $k$ too large and we recurse on the ones before $k$, or our $k$ too small and
+    we recurise on the ones after $k$. Note also that the probability of choosing this $k$ for which
+    we have this maximum number of steps is $\frac{1}{n}$. Asymptotically, these sums are identical,
+    so we can do the following
+    \begin{align*}
+        T(n) &\leq \max_k \Bigg[ \frac{1}{n}\sum_{i=0}^{k-1} T(n-i) 
+            + \frac{1}{n}\sum_{i=k+1}^{n-1} T(i) + \Theta(n) \Bigg] \\
+             &\leq \frac{2}{n}\Bigg( \sum_{i=n/2+1}^{n} T(i) \Bigg) + \Theta(n) \\
+    \end{align*}
+    Now, consider the pivot position (after Polish flag) landing in one of three regions:
+    \begin{itemize}
+        \item 0 to $n/4$: probability $1/4$
+        \item $n/4+1$ to $3n/4$: probability $1/2$
+        \item $3n/4+1$ to $n-1$: probability $1/4$
+    \end{itemize}
+    The first and last regions are pretty bad regions for our pivot to fall, since if we get unlucky
+    we then have to consider at most $~n$ elements on our next recursive step. The middle region is
+    pretty good, since if we get unlucky we only have to recurse on $3n/4$ elements on our next step.
+    So, (considering our next recursive step) with probability $1/2$ we're in the $T(n)$ region and
+    with probability $1/2$ we're in the $T(3n/4)$ region.
+    \begin{align*}
+        T(n) &\leq \frac{1}{2}T(n) + \frac{1}{2}T(3n/4) + \Theta(n) \\
+             &\leq T(3n/4) + \Theta(n)
+    \end{align*}
+
+
+\end{proof}
+
+\section{Lecture 5: Sequences}
+
+\begin{definitionbox}{Data Structure}
+    A data structure is a data store, plus a means of accessing and manipulating the stored data.
+    Algorithms rely on data structures to compute with large amopunts of data and data structures
+    are built on algorithms that tell them how to manipulate the data they store.
+\end{definitionbox}
+
+\begin{definitionbox}{Interface}
+    An interface is a mathematical sepcification for a data structure. It states the type of
+    object(s) represented and the required behaviour of supported operations. An implementation of
+    an interface describes how to represent the data in memory, together with algorithms to perform
+    each of the required operations. Note that an interface may have several different
+    implementations - \textbf{they are not the same thing}!
+\end{definitionbox}
+
+\subsection{Stack Interface and its Implementations}
+A stack uses a \textbf{last in first out} access pattern via
+\begin{itemize}
+    \item \texttt{push($x$)}: stores object $x$ on the top of the stack
+    \item \texttt{peek()}: returns the object $x$ currently at the top of the stack
+    \item \texttt{pop()}: returns and deletes the object $x$ currently at the top of the stack
+    \item \texttt{is-empty()}: returns \textbf{TRUE} iff the stack has no objects
+\end{itemize}
+
+\subsubsection{Linked List}
+\begin{itemize}
+    \item Pointer-based data structure
+    \item Each item stored in a \texttt{node} which contains a pointer to the next node below it.
+        Each \texttt{node} has two fields: \texttt{node.item} and \texttt{node.next}
+    \item Maintains a pointer to the top node \texttt{head} in the stack
+    \item Insertion and deletion from the top takes $\Theta(1)$ time since we can just re-link
+        pointers
+    \item Can peek and check emptiness by reading \texttt{head} $\implies \Theta(1)$ time
+\end{itemize}
+
+\subsubsection{Static Array}
+\begin{itemize}
+    \item Arrays are contiguous chunks of memory cells.
+    \item We maintain a pointer \texttt{top} (this isn't REALLY a pointer, but it's functionally one)
+        pointing to the first empty cell in the array. Initialize \texttt{top} to 0.
+    \item \texttt{push(c)}: we set \texttt{A[top]=c} and increment \texttt{top}.
+    \item \texttt{pop()}: we decrement \texttt{top} and then return \texttt{A[top]}
+    \item \texttt{peek()}: same as \texttt{pop()} then increment \texttt{top} to maintain our array
+        state
+    \item \texttt{is-empty()}: return \textbf{TRUE} iff \texttt{top} greater than 0
+\end{itemize}
+
+\subsubsection{Dynamic Array}
+\begin{itemize}
+    \item $n$ is the number of items stored and $m \geq n$ is the capacity. A resize that copies $n$
+        items is linear, one that doesn't resize is constant.
+\end{itemize}
+
+\subsection{Amortized Analysis}
+We consider the worst-case runtime of a sequence of operations. Now, this is a pretty nontrivial
+topic, but I've found that the best explanation for me is the following amortized analysis of
+appending (\texttt{push($x$)}) a sequence of values to a dynamic array.
+
+
+\paragraph{\href{https://courses.cs.duke.edu/spring19/compsci330/lecture21scribe.pdf}{Proving Amortized Constant Time for insertion into dynamic array sequence:}}
+Suppose we double the size of the array when full.  That is, we reallocate the entire array in memory when $i=2^k+1$. Let's analyze the total cost of $n$ insertions, then divide this total cost by $n$.
+
+\begin{proof}
+    \textbf{What is the cost of the i-th operation?} Case 1: If we do not need to increase the size 
+    of the array, algorithm takes $O(1)$ unit of time. Case 2: If we need to increase the size of 
+    the array, then at this step we must:
+    \begin{enumerate}
+        \item allocate memory for the new array (constant)
+        \item copy over the $2^k$ elements from the old array to the new array ($2^k$ running time)
+        \item free the memory storing the old array (constant)
+        \item append the new element (constant)
+    \end{enumerate}
+    so this algorithm takes $2^k+1$ running time.
+    Let $t(i):=$ the amount of running time.
+    \begin{align*}
+    t(i)= \begin{cases}
+        2^k+1, \text{ if } i=2^k+1 \\
+        1 \text{ otherwise}
+    \end{cases}
+    \end{align*}
+    So we just sum over $n$.
+    \begin{align*}
+        \sum_{i=1}^{n} t(i) &= n + \sum_{{k=0}}^{\lfloor\log_2(n-1)\rfloor}2^k \\
+        &= n+ \frac{2^{\lfloor\log_2(n-1)\rfloor}-1}{2-1} \\
+        &\leq n+2n \\
+        &\leq 3n
+    \end{align*}
+    So the total cost of $n$ insertions is at most $3n$, which has amortized cost at most $3$. 
+    Thus, the amortized cost is $O(1)$.
+\end{proof}
+
+\subsection{Memory Overhead}
+
+\begin{definitionbox}{Memory Overhead}
+    Memory overhead is the memory used in addition to our memory allocated for our data, as a
+    function of the number of elements stored. Dynamic arrays have an overhead of $\Theta(n)$ since
+    we may allocate space $2n$ when storing $n$ elements (right after doubling). Linked list also
+    have $\Theta(n)$ memory overhead, since in addition to the data stored in each node, we need to
+    store a $\Theta(1)$ size memory address pointing to the next node in our list.
+\end{definitionbox}
+
+There's also the \texttt{SEQUENCE} interface, but I can't be bothered to write it here. You can
+implement all the previous implementations within the sequence interface, with some
+runtime advantages/tradeoffs and available constant time operations.
+
+\newpage
+
+\section{Key Formulae and Theorems... Thanks ChatGPT}
+
+\subsection{Theorems to Know}
+
+\subsubsection{Master's Theorem}
+For a recurrence of the form
+\[
+T(n) = aT\left(\frac{n}{b}\right) + f(n),
+\qquad a \geq 1,\ b > 1,
+\]
+let
+\[
+c = \log_b a.
+\]
+
+Then:
+\[
+T(n) =
+\begin{cases}
+\Theta(n^c), & f(n) = O(n^{c-\epsilon}) \text{ for some } \epsilon > 0, \\[4pt]
+\Theta(n^c \log n), & f(n) = \Theta(n^c), \\[4pt]
+\Theta(f(n)), & f(n) = \Omega(n^{c+\epsilon}) \text{ for some } \epsilon > 0
+\text{ and } af(n/b) \leq cf(n) \text{ for some } c<1.
+\end{cases}
+\]
+
+\subsubsection{Fermat's Little Theorem}
+
+If $p$ is prime and $a\not\equiv 0\pmod p$, then
+\[
+a^{p-1}\equiv 1\pmod p.
+\]
+
+Equivalently, for any integer $a$,
+\[
+a^p\equiv a\pmod p.
+\]
+
+\subsubsection{Bezout's Identity}
+
+For integers $a,b$, there exist integers $x,y$ such that
+\[
+ax+by=\gcd(a,b).
+\]
+
+In particular,
+\[
+\gcd(a,b)=1
+\iff
+\exists x,y\in\mathbb Z
+\text{ such that } ax+by=1.
+\]
+
+\subsubsection{Euclidean Algorithm}
+
+For integers $a,b$ with $b>0$,
+\[
+\gcd(a,b)=\gcd(b,a\bmod b).
+\]
+
+Repeatedly applying this identity gives the Euclidean algorithm.
+
+Its running time is
+\[
+O(\log\min(a,b)).
+\]
+
+\subsubsection{Extended Euclidean Algorithm}
+
+The extended Euclidean algorithm computes integers $x,y$ satisfying
+\[
+ax+by=\gcd(a,b).
+\]
+
+If
+\[
+\gcd(a,m)=1,
+\]
+then the coefficient $x$ gives the modular inverse:
+\[
+ax\equiv 1\pmod m.
+\]
+
+\subsubsection{Euler's Theorem}
+
+If
+\[
+\gcd(a,n)=1,
+\]
+then
+\[
+a^{\varphi(n)}\equiv 1\pmod n,
+\]
+where $\varphi(n)$ is Euler's totient function.
+
+Fermat's Little Theorem is the special case
+\[
+n=p
+\]
+for prime $p$, since
+\[
+\varphi(p)=p-1.
+\]
+
+\subsubsection{Chinese Remainder Theorem}
+
+If
+\[
+\gcd(n_i,n_j)=1
+\qquad\text{for all }i\neq j,
+\]
+then the system
+\[
+x\equiv a_1\pmod{n_1},
+\quad
+x\equiv a_2\pmod{n_2},
+\quad\ldots,\quad
+x\equiv a_k\pmod{n_k}
+\]
+has a unique solution modulo
+\[
+N=\prod_{i=1}^k n_i.
+\]
+
+\subsubsection{Binomial Theorem}
+
+For any integer $n\geq 0$,
+\[
+(x+y)^n
+=
+\sum_{k=0}^{n}
+\binom{n}{k}x^{n-k}y^k.
+\]
+
+The binomial coefficient is
+\[
+\binom{n}{k}
+=
+\frac{n!}{k!(n-k)!}.
+\]
+
+\subsubsection{Pascal's Identity}
+
+For $0<k<n$,
+\[
+\binom{n}{k}
+=
+\binom{n-1}{k-1}
++
+\binom{n-1}{k}.
+\]
+
+Boundary cases:
+\[
+\binom{n}{0}=\binom{n}{n}=1.
+\]
+
+\subsubsection{Handshaking Lemma}
+
+For any undirected graph $G=(V,E)$,
+\[
+\sum_{v\in V}\deg(v)=2|E|.
+\]
+
+Consequently, the number of vertices of odd degree is even.
+
+\subsubsection{Pigeonhole Principle}
+
+If $n+1$ objects are placed into $n$ boxes, then at least one box contains at least two objects.
+
+More generally, if $N$ objects are placed into $k$ boxes, then some box contains at least
+\[
+\left\lceil\frac Nk\right\rceil
+\]
+objects.
+
+\subsubsection{Inclusion--Exclusion Principle}
+
+For two sets,
+\[
+|A\cup B|
+=
+|A|+|B|-|A\cap B|.
+\]
+
+For three sets,
+\[
+\begin{aligned}
+|A\cup B\cup C|
+={}&|A|+|B|+|C|\\
+&-|A\cap B|-|A\cap C|-|B\cap C|\\
+&+|A\cap B\cap C|.
+\end{aligned}
+\]
+
+In general,
+\[
+\left|\bigcup_{i=1}^n A_i\right|
+=
+\sum_{\emptyset\neq S\subseteq[n]}
+(-1)^{|S|+1}
+\left|\bigcap_{i\in S}A_i\right|.
+\]
+
+\subsubsection{Cauchy--Schwarz Inequality}
+
+For real numbers $a_1,\ldots,a_n$ and $b_1,\ldots,b_n$,
+\[
+\left(\sum_{i=1}^n a_i b_i\right)^2
+\leq
+\left(\sum_{i=1}^n a_i^2\right)
+\left(\sum_{i=1}^n b_i^2\right).
+\]
+
+\subsubsection{Triangle Inequality}
+
+For real numbers,
+\[
+|a+b|\leq |a|+|b|.
+\]
+
+More generally,
+\[
+\left|\sum_{i=1}^n a_i\right|
+\leq
+\sum_{i=1}^n |a_i|.
+\]
+
+\subsubsection{Law of Total Probability}
+
+If $B_1,\ldots,B_n$ form a partition of the sample space, then
+\[
+P(A)
+=
+\sum_{i=1}^n P(A\mid B_i)P(B_i).
+\]
+
+\subsubsection{Bayes' Theorem}
+
+For events $A$ and $B$ with $P(B)>0$,
+\[
+P(A\mid B)
+=
+\frac{P(B\mid A)P(A)}{P(B)}.
+\]
+
+More generally, if $B_1,\ldots,B_n$ form a partition,
+\[
+P(B_j\mid A)
+=
+\frac{P(A\mid B_j)P(B_j)}
+{\sum_{i=1}^nP(A\mid B_i)P(B_i)}.
+\]
+
+\subsubsection{Linearity of Expectation}
+
+For random variables $X_1,\ldots,X_n$,
+\[
+\mathbb E\left[\sum_{i=1}^nX_i\right]
+=
+\sum_{i=1}^n\mathbb E[X_i].
+\]
+
+This holds whether or not the random variables are independent.
+
+\subsubsection{Markov's Inequality}
+
+For a nonnegative random variable $X$ and $a>0$,
+\[
+P(X\geq a)
+\leq
+\frac{\mathbb E[X]}{a}.
+\]
+
+\subsubsection{Chebyshev's Inequality}
+
+For a random variable $X$ with finite mean $\mu$ and variance $\sigma^2$,
+\[
+P(|X-\mu|\geq t)
+\leq
+\frac{\sigma^2}{t^2}.
+\]
+
+Equivalently,
+\[
+P(|X-\mu|\geq k\sigma)
+\leq
+\frac1{k^2}.
+\]
+
+\subsubsection{Union Bound}
+
+For any events $A_1,\ldots,A_n$,
+\[
+P\left(\bigcup_{i=1}^n A_i\right)
+\leq
+\sum_{i=1}^nP(A_i).
+\]
+
+\subsubsection{Geometric Distribution}
+
+If independent trials have success probability $p$, then the probability that the first success occurs on trial $k$ is
+\[
+P(X=k)=(1-p)^{k-1}p.
+\]
+
+Its expectation is
+\[
+\mathbb E[X]=\frac1p.
+\]
+
+\subsubsection{Birthday Bound}
+
+For $k$ uniformly random choices from a set of size $n$, the probability of at least one collision is approximately
+\[
+1-e^{-k(k-1)/(2n)}.
+\]
+
+In particular, collisions become likely when
+\[
+k=\Theta(\sqrt n).
+\]
+
+\subsection{Summation Formulae}
+% =========================
+% Summation Formulae - should probably partition this better
+% =========================
+
+\subsubsection{Basic Summations}
+
+\[
+\sum_{i=1}^{n} 1 = n
+\]
+
+\[
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2} = \Theta(n^2)
+\]
+
+\[
+\sum_{i=1}^{n} i^2
+= \frac{n(n+1)(2n+1)}{6}
+= \Theta(n^3)
+\]
+
+\[
+\sum_{i=1}^{n} i^3
+= \left(\frac{n(n+1)}{2}\right)^2
+= \Theta(n^4)
+\]
+
+\[
+\sum_{i=1}^{n} i^k = \Theta(n^{k+1})
+\qquad (k > -1)
+\]
+
+% =========================
+% Arithmetic / Geometric
+% =========================
+
+\subsubsection{Arithmetic Series:}
+
+\[
+\sum_{i=0}^{n-1} (a+id)
+=
+\frac{n}{2}\left(2a+(n-1)d\right)
+\]
+
+\subsubsection{Geometric Series:}
+
+\[
+\sum_{i=0}^{n-1} r^i
+=
+\frac{1-r^n}{1-r}
+\qquad (r\neq 1)
+\]
+
+\[
+\sum_{i=0}^{\infty} r^i
+=
+\frac{1}{1-r}
+\qquad (|r|<1)
+\]
+
+\[
+\sum_{i=0}^{n} r^i = \Theta(r^n)
+\qquad (r>1)
+\]
+
+% =========================
+% Harmonic
+% =========================
+
+\subsubsection{Harmonic Series:}
+
+\[
+H_n
+=
+\sum_{i=1}^{n}\frac{1}{i}
+=
+\Theta(\log n)
+\]
+
+More precisely,
+
+\[
+H_n = \ln n + \gamma + O(1/n)
+\]
+
+\[
+\sum_{i=1}^{n}\frac{1}{i^p}
+=
+\begin{cases}
+\Theta(1), & p>1,\\
+\Theta(\log n), & p=1,\\
+\Theta(n^{1-p}), & 0\leq p<1.
+\end{cases}
+\]
+
+% =========================
+% Logarithmic
+% =========================
+
+\subsubsection{Logarithmic Summations:}
+
+\[
+\sum_{i=1}^{n}\log i
+=
+\log(n!)
+=
+\Theta(n\log n)
+\]
+
+\[
+\sum_{i=1}^{n}\log(i)
+=
+\Theta(n\log n)
+\]
+
+\[
+\sum_{i=1}^{n}\frac{\log i}{i}
+=
+\Theta((\log n)^2)
+\]
+
+% =========================
+% Powers of Two
+% =========================
+
+\subsubsection{Powers of Two:}
+
+\[
+\sum_{i=0}^{\log_2 n} 2^i
+=
+2^{\log_2 n+1}-1
+=
+2n-1
+=
+\Theta(n)
+\]
+
+\[
+\sum_{i=0}^{\log_2 n} i
+=
+\Theta((\log n)^2)
+\]
+
+\[
+\sum_{i=0}^{\log_2 n} \frac{1}{2^i}
+=
+\Theta(1)
+\]
+
+\[
+\sum_{i=0}^{\log_2 n} \frac{n}{2^i}
+=
+\Theta(n)
+\]
+
+% =========================
+% Telescoping
+% =========================
+
+\subsubsection{Telescoping Sums:}
+
+\[
+\sum_{i=1}^{n}(a_i-a_{i+1})
+=
+a_1-a_{n+1}
+\]
+
+A common example:
+
+\[
+\sum_{i=1}^{n}\frac{1}{i(i+1)}
+=
+\sum_{i=1}^{n}
+\left(\frac1i-\frac1{i+1}\right)
+=
+1-\frac1{n+1}
+=
+\Theta(1)
+\]
+
+% =========================
+% Useful Asymptotic Rules
+% =========================
+
+\subsubsection{Useful Rules:}
+
+\[
+\sum_{i=1}^{n}\Theta(f(i))
+=
+\Theta\left(\sum_{i=1}^{n}f(i)\right)
+\]
+
+\[
+\sum_{i=1}^{n}c\,f(i)
+=
+c\sum_{i=1}^{n}f(i)
+\]
+
+\[
+\sum_{i=1}^{n}(f(i)+g(i))
+=
+\sum_{i=1}^{n}f(i)
++
+\sum_{i=1}^{n}g(i)
+\]
+
+\[
+\sum_{i=1}^{n} f(i)
+\leq
+n\max_{1\leq i\leq n} f(i)
+\]
+
+\[
+\sum_{i=1}^{n} f(i)
+\geq
+n\min_{1\leq i\leq n} f(i)
+\]
+
+% =========================
+% Integral Bounds
+% =========================
+
+\subsubsection{Integral Approximation:}
+
+For nonnegative increasing $f$,
+
+\[
+\int_1^n f(x)\,dx
+\leq
+\sum_{i=1}^{n}f(i)
+\leq
+f(n)+\int_1^n f(x)\,dx
+\]
+
+For nonnegative decreasing $f$,
+
+\[
+\int_1^{n+1} f(x)\,dx
+\leq
+\sum_{i=1}^{n}f(i)
+\leq
+f(1)+\int_1^n f(x)\,dx.
+\]
 
 \end{document}
