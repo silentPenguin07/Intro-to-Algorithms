@@ -10,7 +10,7 @@
 \usepackage{tocloft}
 \renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
 
-\title{Introduction to Algorithms}
+\title{Massachusetts Institute of Technology - Introduction to Algorithms (6.1210)}
 \author{Xavier Henry}
 \date{September 2026}
 
@@ -607,6 +607,104 @@ Suppose we double the size of the array when full.  That is, we reallocate the e
 There's also the \texttt{SEQUENCE} interface, but I can't be bothered to write it here. You can
 implement all the previous implementations within the sequence interface, with some
 runtime advantages/tradeoffs and available constant time operations.
+
+
+\section{Lecture 6: Sets and Hashes}
+\begin{itemize}
+    \item \texttt{Build()} (Initialize Container)
+    \item \texttt{size()} (Container)
+    \item \texttt{Find(e)} (Static)
+    \item \texttt{Insert(x) - replace if already exists} (Dynamic)
+    \item \texttt{Delete(k)} (Order)
+\end{itemize}
+
+\subsection{Comparison Model of Computation}
+We associate a key with each object/item stored and determine equivalence by objects' keys. \\
+One way to ensure constant time lookup is to use a \textbf{direct access array}. Say we have an 
+item with key $k$, our item is stored in the $k-th$ position in the sequence. Insertion and deletion
+also take constant time. However, we don't know how high our indexing goes. For example, if given 
+9 digit integer keys, we'd need to allocate \textbf{$10^9$} slots in memory to store the items. 
+Moreover, the size of our largest key $u$ is bounded by the word size $w$: $u < 2^w$ (this is 
+strictly less than, because we're assuming $0 \leq k \leq 2^w-1$).
+
+\paragraph{What if we surpass this bound?} We map a large space of $u$ keys down to a range 
+$m=\Theta(n)$. In other words, we define a map:
+
+\begin{align*}
+    h: \{0,...,u-1\} \rightarrow \{0,...,n-1\}
+\end{align*}
+
+that maps the big space of $u$ things to a small space of $\Theta(n)$ things. By the pigeonhole 
+principle, some of our items must collide after mapping. We have two options to deal with 
+collisions:
+\begin{enumerate}
+    \item \textbf{Open addressing:} over allocate our $\Theta(n)$ array and find another place to 
+        store it in there. (unimportant)
+    \item At that key, store a pointer to another data structure (like a sequence), where we can 
+        store a collection of items with collisions. That is, if our hashing function assigns $x$
+        items the same key $k$, then at the corresponding position in our smaller array that we 
+        map to, we can point to another data structure storing the $x$ items.
+\end{enumerate}
+Recall that by the pigeonhole principle, collisions are inevitable with any hash function and for 
+$u$ very large, there is a possibility that all of our items collide. For now, we consider the 
+easiest way to get from a large space of keys to a smaller one.
+
+\subsubsection{Division Method}
+
+\begin{align*}
+    h(k)=k \text{mod(m)}
+\end{align*}
+
+This way, we take a key in the large space, and \textbf{mod} it so that it wraps around $m$ spaces.
+In general, this distributes collisions uniformly given our keys are selected nicely. However, there
+still exists some collection of inputs that map everything to one place. In any case, for any fixed
+hash function, we can end up having all items collide (in the deterministic case). Instead, we can 
+take a non-deterministic approach, where we choose a random hash function for any collection of 
+keys input by the user.
+
+\subsubsection{Universal Hash Function}
+So, we define a family of hash functions and randomly choose from this collection. Start with a 
+fixed hash function as shown below.
+
+\begin{align*}
+    h_{ab}=(((ak+b)\text{ mod p) mod m}) 
+\end{align*}
+
+Now, generalize to a family:
+
+\begin{align*}
+    H(p,m)=\{h_{ab}(k) | a,b \in \{0,...,p-1\} \text{ and } a \neq 0 \}
+\end{align*}
+
+We have a hash family parameterized by the length of our smaller array $m$ and fix some random 
+large prime $p$ bigger than $u$. When we instantiate the hash table, we choose a random $a$ and 
+$b$ to generate our function. By doing this \textbf{non-deterministic} jumbling, it is very 
+unlikely for any given collection of keys to have too frequent collisions. Using this 
+\textbf{universal hash family}, for any two keys, the probability that they collide is less than 
+$1/m$. \\
+Define random variable $X_{ij}$ over choice of $h \in H$, which means $X_{ij}=1$ if 
+$h(k_i)=h(k_j)$, $0$ otherwise. \\
+Size of chain at $h(k_i)$ is just the sum:
+
+\begin{align*}
+    X_i&=\sum_{j=0}^{n-1}X_{ij} \\
+    \mathbb{E}_{h \in H} [X_i]&=\mathbb{E}\Bigg[\sum_{j}X_{ij}\Bigg] \\
+    &=\sum_{j\neq i}\mathbb{E}[X_{ij}]+1 \\
+    &= \sum_{j\neq i}^{n-1}(\frac{1}{m})+1 \\
+    &= \frac{n-1}{m} + 1
+\end{align*}
+
+
+
+
+
+
+
+
+
+
+
+
 
 \newpage
 
