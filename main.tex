@@ -694,10 +694,95 @@ Size of chain at $h(k_i)$ is just the sum:
     &= \frac{n-1}{m} + 1
 \end{align*}
 
-\section{}
+\section{Lecture 7: Radix Sort}
+Trivial.
+
+\section{Lecture 8: Binary Search Trees}
+Binary trees are a generalization of linked lists where the tree is comprised of nodes that are 
+connected to each other. Each node has up to two children below it, and up to one parent above it.
+
+\begin{itemize}
+    \item The root of the tree is the unique node without a parent
+    \item We access a binary tree data structure with a pointer to its root; in this way we can
+        equate a binary tree with its root
+    \item Each node in the tree is the root of the subtree rooted at the node
+    \item A node is called a leaf if both its left and right children are empty. A leaf node
+        has no descendants.
+    \item The dept of a node is the number of its ancestors
+    \item The height of a node is the length of the longest path from the node to a leaf in the
+        subtree rooted at that node.
+    \item The height of a tree is the height of its root; an empty tree has height -1.
+\end{itemize}
+
+\subsection{Traversals}
+A common set of operations on trees are the so-called traversals. They enumerate all the nodes of a
+given tree in a specified order.
+
+\subsubsection{In-Order Traversals}
+Visits the left child of the root first, recursively, outputs the root node, and then visits
+the right child of the root recursively.
+
+\subsubsection{Pre-Order Traversal}
+The pre-order traversal outputs first the root node, then recursively traverses the left child, then
+recursively traverses the right child.
+
+\subsubsection{Post-Order Traversal}
+Recursively traverses the left child of the root, then recursively traverses the right child, and
+then outputs the root.
+
+\subsection{Binary Search Trees and Sets}
+We can implement the set interface using binary trees. To do this, suppose we have a collection of
+objects and each object $x$ has a key $k$. We assume all keys are different. We can store the
+objects in the nodes of a binary tree and impose some structure to facilitate performing
+"binary searches" on the tree for values. \\
+Search, insertion, deletion, min/max, and predecessor/successor quieries take $O(h)$ time where $h$
+is the tree height. Iteration takes $\Theta(n)$ and construction by sorting takes $\Theta(n\log n)$
+time. We can also keep our tree semi-balanced such that $h \in \Theta(\log n)$.
 
 
+\section{Lecture 9: Augmented Binary Trees}
 
+\subsection{Sequences as Binary Trees}
+Suppose we have a sequence $x_0, x_1, ..., x_n$ of elements. One way is to use the same
+construction as before, but with indices as keys. We can instead keep the indices 
+\textbf{implicitly} through an augmented binary tree. Note that we will not be using the binary
+search property, since sequences don't have keys. Instead, we maintain the invariant that the in-
+order traversal of the tree outputs the sequence order. We call this tree a \textbf{binary-tree 
+sequence}: its in-order traversal represents the sequence order, and its items need not
+satisfy the BST property.
+
+\subsection{Tree Augmentations}
+An \textbf{augmentation} stores extra information in a data structure so that it can support
+additional operations efficiently. It is required that
+\begin{itemize}
+    \item the value only depends on the subtree
+    \item the value can be computed efficiently in $O(1)$ time from the node's item and the values
+        stored at the node's children
+    \item a node's values do not depend on the values of its parent, or of any of its other
+        ancestors
+\end{itemize}
+Another way to think of an augmentation is as a function $f(T)$ that takes an input tree and can be
+computed using only $T.item$, $f(T.left)$, and $f(T.right)$. For example, subtree size. This is just
+the sum of the size of the left and right children plus 1 (the node itself). A nonexample is the
+depth of a node, which requires looking at its ancestors, not the subtree.
+
+\paragraph{Maintaining an Augmentation}: Modifying trees may break augmentations, so we must repair
+the augmentations before we finish modifying the tree. A change to an augmentation in a node only
+propagates to the ancestors of that node in the tree (bottom-up).
+
+\subsection{Subtree Size: Order Statistics and Sequences}
+Order Statistics of a binary tree is about associating a node with its index or "rank" as derived
+from \textbf{in-order traversal} (first node has rank 1, and the last rank $n$). In a BST, the
+node of rank $k$ holds the $k-th$ smallest key. In a binary-tree sequence, it holds the $k-th$ 
+sequence element $X_{k}$.
+
+\subsection{Determining the Rank of an Element}
+\begin{proof}
+    The rank of $x$ is the number of nodes preceding it in an in-order tree walk plus 1 for $x$ 
+    itself. We count $x$'s left subtree and $x$ itself, then walk up toward the root. Moving up from
+    a left child adds nothing (since we traverse the left first). Moving up from a right child adds
+    the parent as well as the parent's left subtree. (more on this later if I feel up to it)
+\end{proof}
 
 
 
